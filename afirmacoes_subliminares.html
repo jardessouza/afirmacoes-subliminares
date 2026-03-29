@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Afirmações Subliminares</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Outfit:wght@200;300;400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0a0a0f;
+    --text: #e8e4dc;
+    --muted: rgba(232,228,220,0.35);
+    --accent-current: #b8a88a;
+  }
+
+  html, body {
+    width: 100%; height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Outfit', sans-serif;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* grain overlay */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    opacity: 0.6;
+  }
+
+  /* ambient glow */
+  .glow {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(120px);
+    opacity: 0;
+    transition: opacity 2s ease, transform 3s ease;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .glow-1 { width: 500px; height: 500px; top: -100px; left: -100px; }
+  .glow-2 { width: 400px; height: 400px; bottom: -80px; right: -80px; }
+
+  /* progress bar (mobile) */
+  #progress-bar {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: rgba(232,228,220,0.08);
+    z-index: 10;
+  }
+  #progress-fill {
+    height: 100%;
+    background: var(--accent-current);
+    transition: width 0.5s ease;
+    width: 0%;
+  }
+
+  /* main stage */
+  #stage {
+    position: fixed; inset: 0; z-index: 1;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 3rem 2rem;
+  }
+
+  /* category tag */
+  #category-tag {
+    font-family: 'Outfit', sans-serif;
+    font-size: 10px;
+    font-weight: 300;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 2.5rem;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+
+  /* affirmation text */
+  #affirmation {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(1.4rem, 4vw, 2.6rem);
+    font-weight: 300;
+    line-height: 1.5;
+    text-align: center;
+    max-width: 700px;
+    color: var(--text);
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.9s ease, transform 0.9s ease;
+    letter-spacing: 0.01em;
+  }
+
+  #affirmation em {
+    font-style: italic;
+    color: var(--accent-current);
+  }
+
+  /* divider line */
+  #divider {
+    width: 0;
+    height: 1px;
+    background: var(--accent-current);
+    margin: 2rem auto;
+    opacity: 0;
+    transition: width 0.8s ease 0.3s, opacity 0.5s ease 0.3s;
+  }
+
+  /* counter */
+  #counter {
+    font-size: 10px;
+    font-weight: 200;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.6s ease 0.5s, transform 0.6s ease 0.5s;
+  }
+
+  /* loop badge */
+  #loop-badge {
+    font-size: 9px;
+    font-weight: 300;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    margin-top: 0.6rem;
+    opacity: 0;
+    transition: opacity 0.6s ease 0.6s;
+  }
+
+  /* controls */
+  #controls {
+    position: fixed;
+    bottom: 2rem; left: 50%; transform: translateX(-50%);
+    z-index: 5;
+    display: flex; align-items: center; gap: 1.5rem;
+  }
+
+  .btn {
+    background: none;
+    border: 0.5px solid rgba(232,228,220,0.15);
+    color: var(--muted);
+    font-family: 'Outfit', sans-serif;
+    font-size: 11px;
+    font-weight: 300;
+    letter-spacing: 0.12em;
+    padding: 8px 20px;
+    border-radius: 100px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    touch-action: manipulation;
+  }
+  .btn:hover {
+    color: var(--text);
+    border-color: rgba(232,228,220,0.4);
+    background: rgba(232,228,220,0.04);
+  }
+  .btn:active {
+    transform: scale(0.96);
+  }
+
+  .btn-play {
+    width: 44px; height: 44px; padding: 0;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    border-color: rgba(232,228,220,0.25);
+  }
+  .btn-play.playing {
+    border-color: var(--accent-current);
+    color: var(--accent-current);
+  }
+
+  /* progress dots (desktop) */
+  #dots {
+    position: fixed;
+    right: 2rem; top: 50%; transform: translateY(-50%);
+    z-index: 5;
+    display: flex; flex-direction: column; gap: 7px;
+  }
+  .dot {
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: rgba(232,228,220,0.2);
+    transition: all 0.4s ease;
+    cursor: pointer;
+  }
+  .dot.active {
+    background: var(--accent-current);
+    transform: scale(1.6);
+  }
+  .dot.visited {
+    background: rgba(232,228,220,0.4);
+  }
+
+  /* pause selector */
+  #pause-label {
+    position: fixed;
+    top: 2rem; right: 2rem;
+    font-size: 10px; letter-spacing: 0.12em;
+    color: var(--muted);
+    z-index: 5;
+    display: flex; align-items: center; gap: 8px;
+  }
+  #pause-select {
+    background: none; border: none;
+    font-family: 'Outfit', sans-serif;
+    font-size: 10px; color: var(--text);
+    cursor: pointer; outline: none;
+    letter-spacing: 0.08em;
+  }
+  #pause-select option { background: #1a1a2e; }
+
+  /* logo */
+  #logo {
+    position: fixed; top: 2rem; left: 2rem;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 13px; font-weight: 300;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    z-index: 5;
+  }
+
+  /* audio wave animation */
+  #audio-wave {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    height: 14px;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+  #audio-wave.active { opacity: 1; }
+  .wave-bar {
+    width: 2px;
+    height: 4px;
+    background: var(--accent-current);
+    border-radius: 1px;
+    animation: wave 1.2s ease-in-out infinite;
+  }
+  .wave-bar:nth-child(1) { animation-delay: 0s; }
+  .wave-bar:nth-child(2) { animation-delay: 0.15s; }
+  .wave-bar:nth-child(3) { animation-delay: 0.3s; }
+  .wave-bar:nth-child(4) { animation-delay: 0.45s; }
+  .wave-bar:nth-child(5) { animation-delay: 0.6s; }
+
+  @keyframes wave {
+    0%, 100% { height: 4px; }
+    50% { height: 14px; }
+  }
+
+  /* visible state */
+  .visible {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  /* ==================== RESPONSIVE ==================== */
+
+  /* Tablet */
+  @media (max-width: 768px) {
+    #dots { right: 1rem; gap: 5px; }
+    .dot { width: 3px; height: 3px; }
+    #stage { padding: 2.5rem 2rem; }
+    #affirmation { max-width: 85vw; }
+  }
+
+  /* Mobile */
+  @media (max-width: 600px) {
+    #progress-bar { display: block; }
+
+    #dots { display: none; }
+
+    #logo {
+      top: calc(0.8rem + env(safe-area-inset-top, 0px));
+      left: 1.2rem;
+      font-size: 11px;
+    }
+
+    #pause-label {
+      top: calc(0.8rem + env(safe-area-inset-top, 0px));
+      right: 1.2rem;
+      font-size: 9px;
+    }
+
+    #stage {
+      padding: 4rem 1.5rem 6rem;
+    }
+
+    #category-tag {
+      font-size: 9px;
+      margin-bottom: 1.8rem;
+    }
+
+    #affirmation {
+      font-size: clamp(1.15rem, 5vw, 1.8rem);
+      max-width: 90vw;
+      line-height: 1.6;
+    }
+
+    #divider { margin: 1.5rem auto; }
+
+    #counter { font-size: 9px; }
+
+    #controls {
+      bottom: calc(1.2rem + env(safe-area-inset-bottom, 0px));
+      gap: 1rem;
+    }
+
+    .btn {
+      font-size: 10px;
+      padding: 10px 16px;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn-play {
+      width: 50px; height: 50px;
+      font-size: 16px;
+    }
+
+    .glow-1 { width: 300px; height: 300px; filter: blur(80px); }
+    .glow-2 { width: 250px; height: 250px; filter: blur(80px); }
+  }
+
+  /* Very small screens */
+  @media (max-width: 380px) {
+    #affirmation {
+      font-size: clamp(1rem, 4.5vw, 1.4rem);
+    }
+    .btn {
+      font-size: 9px;
+      padding: 8px 12px;
+    }
+    #controls { gap: 0.6rem; }
+  }
+
+  /* Landscape mobile */
+  @media (max-height: 500px) {
+    #category-tag { margin-bottom: 1rem; }
+    #divider { margin: 1rem auto; }
+    #stage { padding: 2rem 3rem; }
+    #logo { top: 0.8rem; }
+    #pause-label { top: 0.8rem; }
+    #controls { bottom: 0.6rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="glow glow-1" id="glow1"></div>
+<div class="glow glow-2" id="glow2"></div>
+
+<div id="progress-bar"><div id="progress-fill"></div></div>
+
+<div id="logo">afirmações</div>
+
+<div id="pause-label">
+  pausa
+  <select id="pause-select">
+    <option value="0">0s</option>
+    <option value="1000">1s</option>
+    <option value="2000" selected>2s</option>
+    <option value="3000">3s</option>
+  </select>
+</div>
+
+<div id="stage">
+  <div id="category-tag"></div>
+  <div id="affirmation"></div>
+  <div id="divider"></div>
+  <div id="counter"></div>
+  <div id="loop-badge"></div>
+</div>
+
+<div id="dots"></div>
+
+<div id="controls">
+  <button class="btn" id="btn-prev">&#8592; anterior</button>
+  <div id="audio-wave">
+    <div class="wave-bar"></div>
+    <div class="wave-bar"></div>
+    <div class="wave-bar"></div>
+    <div class="wave-bar"></div>
+    <div class="wave-bar"></div>
+  </div>
+  <button class="btn btn-play" id="btn-play" title="play / pause">&#9654;</button>
+  <button class="btn" id="btn-next">próxima &#8594;</button>
+</div>
+
+<script>
+const data = [
+  {
+    category: "foco e presença",
+    accent: "#b8a88a",
+    glow: ["rgba(184,168,138,0.12)", "rgba(184,168,138,0.06)"],
+    items: [
+      "Você permanece no seu plano principal com facilidade, mesmo quando surgem <em>distrações</em> ao redor.",
+      "Você reconhece desvios imediatamente e retorna ao foco com <em>firmeza</em> e tranquilidade.",
+      "Você sabe que seu caminho é claro e prioritário, e age a partir dessa <em>certeza</em> todos os dias.",
+      "Você toma decisões difíceis e segue em frente sem buscar recompensar ninguém por isso.",
+      "Você avança e cresce sem precisar <em>equilibrar</em> todos os relacionamentos ao redor."
+    ]
+  },
+  {
+    category: "limites e respeito",
+    accent: "#7a9e8e",
+    glow: ["rgba(122,158,142,0.12)", "rgba(122,158,142,0.06)"],
+    items: [
+      "Você respeita o espaço das pessoas e fala apenas o que é <em>necessário</em> e solicitado.",
+      "Você oferece sua experiência quando convidado, sabendo que cada pessoa tem o direito de trilhar o <em>próprio caminho</em>.",
+      "Você lida com autoridade de forma madura e exige respeito com <em>serenidade</em> e segurança.",
+      "Você aceita confrontos como parte natural do crescimento e os enfrenta com <em>clareza</em>.",
+      "Você expõe sua opinião e se posiciona todos os dias, mesmo diante do risco de <em>rejeição</em>."
+    ]
+  },
+  {
+    category: "brilhar e comunicar",
+    accent: "#d4956a",
+    glow: ["rgba(212,149,106,0.12)", "rgba(212,149,106,0.06)"],
+    items: [
+      "Você se permite <em>brilhar</em> e ser visto com orgulho e naturalidade.",
+      "Você se expõe a algo novo todos os dias e colhe o aprendizado que vem disso.",
+      "Sua comunicação é clara, direta e impactante. As pessoas <em>ouvem você</em> com atenção.",
+      "Você melhora sua forma de se expressar continuamente e sente <em>prazer</em> nisso.",
+      "Você celebra suas conquistas sem precisar minimizá-las ou justificá-las para os outros."
+    ]
+  },
+  {
+    category: "abundância e liberdade",
+    accent: "#9e8e7a",
+    glow: ["rgba(158,142,122,0.12)", "rgba(158,142,122,0.06)"],
+    items: [
+      "Você vive a partir da <em>abundância</em> e liberta-se com facilidade de qualquer orgulho ligado à falta.",
+      "Você é independente emocionalmente de pai, mãe e de qualquer expectativa <em>externa</em>.",
+      "Você age a partir da sua própria certeza interna, sem precisar de <em>validação</em> para seguir em frente.",
+      "Você merece tudo aquilo que está construindo e recebe com <em>leveza</em> cada resultado positivo.",
+      "Sua vida é guiada pelas suas próprias decisões e você assume plena <em>responsabilidade</em> por elas."
+    ]
+  },
+  {
+    category: "relacionamentos",
+    accent: "#9e7a8e",
+    glow: ["rgba(158,122,142,0.12)", "rgba(158,122,142,0.06)"],
+    items: [
+      "Você reconhece quando um ciclo se encerra e segue em frente com <em>paz</em> e resolução.",
+      "Você participa das relações como protagonista e deixa que cada pessoa resolva o que é <em>dela</em>.",
+      "Você assume a responsabilidade pelas suas escolhas e age para transformá-las quando necessário.",
+      "Você tem clareza sobre o que quer nas relações e comunica isso com <em>firmeza</em> e respeito.",
+      "Você é emocionalmente livre e suas relações são construídas sobre <em>acordos claros</em> e combinados."
+    ]
+  }
+];
+
+// flatten all items
+const all = [];
+data.forEach(cat => {
+  cat.items.forEach(text => {
+    all.push({ category: cat.category, accent: cat.accent, glow: cat.glow, text });
+  });
+});
+
+// state
+let current = 0;
+let playing = false;
+let loopCount = 1;
+let pauseTimer = null;
+
+// audio
+const audioEl = new Audio();
+audioEl.preload = 'auto';
+
+// DOM refs
+const tagEl    = document.getElementById('category-tag');
+const affEl    = document.getElementById('affirmation');
+const divEl    = document.getElementById('divider');
+const cntEl    = document.getElementById('counter');
+const loopEl   = document.getElementById('loop-badge');
+const dotsEl   = document.getElementById('dots');
+const playBtn  = document.getElementById('btn-play');
+const glow1    = document.getElementById('glow1');
+const glow2    = document.getElementById('glow2');
+const pauseSel = document.getElementById('pause-select');
+const waveEl   = document.getElementById('audio-wave');
+const progFill = document.getElementById('progress-fill');
+
+// build dots
+all.forEach((_, i) => {
+  const d = document.createElement('div');
+  d.className = 'dot';
+  d.addEventListener('click', () => goTo(i));
+  dotsEl.appendChild(d);
+});
+
+// --- Audio helpers ---
+
+function getPlainText(html) {
+  return html.replace(/<\/?em>/g, '');
+}
+
+function getAudioSrc(index) {
+  return 'audios/' + getPlainText(all[index].text) + '.mp3';
+}
+
+function stopAudio() {
+  audioEl.pause();
+  audioEl.currentTime = 0;
+  clearTimeout(pauseTimer);
+  waveEl.classList.remove('active');
+}
+
+function playCurrentAudio() {
+  audioEl.src = getAudioSrc(current);
+  audioEl.play().then(() => {
+    waveEl.classList.add('active');
+  }).catch(() => {
+    // autoplay blocked — advance after pause anyway
+    waveEl.classList.remove('active');
+    const pause = parseInt(pauseSel.value, 10) + 3000;
+    pauseTimer = setTimeout(() => {
+      if (playing) advance();
+    }, pause);
+  });
+}
+
+// when audio ends, wait the selected pause then advance
+audioEl.addEventListener('ended', () => {
+  waveEl.classList.remove('active');
+  if (!playing) return;
+  const pause = parseInt(pauseSel.value, 10);
+  pauseTimer = setTimeout(() => {
+    if (!playing) return;
+    advance();
+  }, pause);
+});
+
+// --- Display helpers ---
+
+function updateDots() {
+  const dots = dotsEl.querySelectorAll('.dot');
+  dots.forEach((d, i) => {
+    d.classList.remove('active', 'visited');
+    if (i === current) d.classList.add('active');
+    else if (i < current) d.classList.add('visited');
+  });
+}
+
+function updateProgress() {
+  progFill.style.width = ((current + 1) / all.length * 100) + '%';
+}
+
+function setAccent(color, glows) {
+  document.documentElement.style.setProperty('--accent-current', color);
+  glow1.style.background = glows[0];
+  glow2.style.background = glows[1];
+  glow1.style.opacity = '1';
+  glow2.style.opacity = '1';
+}
+
+function show(index, direction) {
+  const dir = direction || 1;
+  const item = all[index];
+
+  // fade out
+  affEl.style.opacity = '0';
+  affEl.style.transform = 'translateY(' + (dir * -15) + 'px)';
+  tagEl.style.opacity = '0';
+  tagEl.style.transform = 'translateY(8px)';
+  divEl.style.opacity = '0';
+  divEl.style.width = '0';
+  cntEl.style.opacity = '0';
+  cntEl.style.transform = 'translateY(8px)';
+  loopEl.style.opacity = '0';
+
+  setTimeout(() => {
+    tagEl.textContent = item.category;
+    affEl.innerHTML = item.text;
+    cntEl.textContent = (index + 1) + ' / ' + all.length;
+    if (loopCount > 1) {
+      loopEl.textContent = 'ciclo ' + loopCount;
+    }
+
+    setAccent(item.accent, item.glow);
+    updateDots();
+    updateProgress();
+
+    // fade in
+    affEl.style.transform = 'translateY(' + (dir * 15) + 'px)';
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        tagEl.classList.add('visible');
+        affEl.classList.add('visible');
+        cntEl.classList.add('visible');
+        divEl.style.opacity = '0.4';
+        divEl.style.width = '48px';
+        if (loopCount > 1) loopEl.style.opacity = '1';
+      });
+    });
+  }, 400);
+}
+
+// --- Navigation ---
+
+function advance() {
+  const nextIdx = current + 1;
+  if (nextIdx >= all.length) {
+    // completed full cycle — loop
+    loopCount++;
+    current = 0;
+  } else {
+    current = nextIdx;
+  }
+  show(current, 1);
+  setTimeout(() => {
+    if (playing) playCurrentAudio();
+  }, 500);
+}
+
+function goTo(i, dir) {
+  stopAudio();
+  current = ((i % all.length) + all.length) % all.length;
+  show(current, dir !== undefined ? dir : 1);
+  if (playing) {
+    setTimeout(() => playCurrentAudio(), 500);
+  }
+}
+
+function next() { goTo(current + 1, 1); }
+function prev() { goTo(current - 1, -1); }
+
+function togglePlay() {
+  playing = !playing;
+  if (playing) {
+    playBtn.innerHTML = '&#9646;&#9646;';
+    playBtn.classList.add('playing');
+    playCurrentAudio();
+  } else {
+    playBtn.innerHTML = '&#9654;';
+    playBtn.classList.remove('playing');
+    stopAudio();
+  }
+}
+
+// --- Events ---
+
+document.getElementById('btn-next').addEventListener('click', next);
+document.getElementById('btn-prev').addEventListener('click', prev);
+playBtn.addEventListener('click', togglePlay);
+
+// keyboard
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') next();
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') prev();
+  if (e.key === ' ') { e.preventDefault(); togglePlay(); }
+});
+
+// touch swipe
+let touchStartX = 0;
+let touchStartY = 0;
+document.addEventListener('touchstart', e => {
+  touchStartX = e.changedTouches[0].screenX;
+  touchStartY = e.changedTouches[0].screenY;
+}, { passive: true });
+
+document.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].screenX - touchStartX;
+  const dy = e.changedTouches[0].screenY - touchStartY;
+  // only horizontal swipes (ignore if too short or more vertical)
+  if (Math.abs(dx) < 50 || Math.abs(dy) > Math.abs(dx)) return;
+  if (dx < 0) next();
+  else prev();
+}, { passive: true });
+
+// preload next audio when current starts playing
+audioEl.addEventListener('playing', () => {
+  const nextIdx = (current + 1) % all.length;
+  const preload = new Audio();
+  preload.preload = 'auto';
+  preload.src = getAudioSrc(nextIdx);
+});
+
+// init
+show(0, 1);
+</script>
+</body>
+</html>
