@@ -265,6 +265,41 @@
     transform: none !important;
   }
 
+  /* start overlay */
+  #start-overlay {
+    position: fixed; inset: 0; z-index: 100;
+    background: var(--bg);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: opacity 0.8s ease;
+  }
+  #start-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+  #start-overlay .start-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(1.6rem, 5vw, 2.8rem);
+    font-weight: 300;
+    color: var(--text);
+    margin-bottom: 1.5rem;
+    letter-spacing: 0.02em;
+  }
+  #start-overlay .start-hint {
+    font-family: 'Outfit', sans-serif;
+    font-size: 11px;
+    font-weight: 300;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+  }
+
   /* ==================== RESPONSIVE ==================== */
 
   /* Tablet */
@@ -359,6 +394,11 @@
 </style>
 </head>
 <body>
+
+<div id="start-overlay">
+  <div class="start-title">afirmações subliminares</div>
+  <div class="start-hint">toque para iniciar</div>
+</div>
 
 <div class="glow glow-1" id="glow1"></div>
 <div class="glow glow-2" id="glow2"></div>
@@ -691,7 +731,27 @@ audioEl.addEventListener('playing', () => {
   preload.src = getAudioSrc(nextIdx);
 });
 
-// init
+// --- Auto-start on first interaction ---
+const startOverlay = document.getElementById('start-overlay');
+
+function startAll() {
+  startOverlay.classList.add('hidden');
+  setTimeout(() => startOverlay.style.display = 'none', 800);
+  // activate playing state
+  playing = true;
+  playBtn.innerHTML = '&#9646;&#9646;';
+  playBtn.classList.add('playing');
+  show(0, 1);
+  setTimeout(() => playCurrentAudio(), 500);
+}
+
+startOverlay.addEventListener('click', startAll, { once: true });
+startOverlay.addEventListener('touchend', (e) => {
+  e.preventDefault();
+  startAll();
+}, { once: true });
+
+// show first phrase visually (no audio yet)
 show(0, 1);
 </script>
 </body>
